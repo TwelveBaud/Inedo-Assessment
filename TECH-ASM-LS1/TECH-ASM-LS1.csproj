@@ -60,10 +60,6 @@
       <Project>{21261242-55fb-4bcf-bf8a-b0200a503b7d}</Project>
       <Name>EntMgr-Interfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Mallard\Mallard.csproj">
-      <Project>{2796a042-5baa-4453-84e9-7acd640b3c32}</Project>
-      <Name>Mallard</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

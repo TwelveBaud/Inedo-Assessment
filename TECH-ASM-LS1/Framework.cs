@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Security;
 using System.Security.Permissions;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using EntMgr;
 
@@ -43,6 +40,10 @@ namespace TECH_ASM_LS1
         static Framework()
         {
             // Try to convince upversion .NET to permit stronger encryption, if possible
+            // (.NET 4.5.2 doesn't support TLS 1.2; when run on upversion CLRs, these
+            // are the magic incantations to get out of compatibility mode and potentially
+            // use it anyway. Not needed for the HTTP testing URL, but potentially needed for
+            // HTTPS URLs in staging or production.
             try
             {
                 var AppContext_SetSwitch = Type.GetType("System.AppContext").GetMethod("SetSwitch");
@@ -56,8 +57,6 @@ namespace TECH_ASM_LS1
             catch (Exception)
             {
             }
-
-            GC.KeepAlive(System.Web.HttpContext.Current);
         }
 
         private HttpClient httpClient;
@@ -85,7 +84,7 @@ namespace TECH_ASM_LS1
              };
         }
 
-        [WebPermission(SecurityAction.Assert, ConnectPattern = "http://44.inedo.com/FoxworksEntMgr/.+")]
+        [WebPermission(SecurityAction.Assert, ConnectPattern = "http://44\\.inedo\\.com/FoxworksEntMgr/.+")]
         public IEnumerable<Tuple<Guid, string>> GetCustomers()
         {
             var customerListAsString = httpClient.GetStringAsync(
@@ -135,7 +134,7 @@ namespace TECH_ASM_LS1
         }
 
         [ReflectionPermission(SecurityAction.Assert, MemberAccess = true)]
-        [WebPermission(SecurityAction.Assert, ConnectPattern = "http://44.inedo.com/FoxworksEntMgr/.+")]
+        [WebPermission(SecurityAction.Assert, ConnectPattern = "http://44\\.inedo\\.com/FoxworksEntMgr/.+")]
         private IEntity ResolveEntity(Guid entityId)
         {
             if (entityId == default) return null;
@@ -148,7 +147,7 @@ namespace TECH_ASM_LS1
                 throw new ArgumentException(null, nameof(entityId));
             var entityDataAsBytes = System.Convert.FromBase64String(entityAsXml.Root.Value);
 
-            // entityDataAsBytes has a series of Pascal strings The first four are entity type 
+            // entityDataAsBytes has a series of Pascal strings. The first four are entity type 
             // name, entity assembly name, entity manager type name, and entity manager 
             // assembly name. The remainer are key/value pairs of fields in that entity.
 
@@ -172,7 +171,13 @@ namespace TECH_ASM_LS1
 
             var entityType = entityTypes[$"{typeName}!{typeAssm}"];
             var managerType = managerTypes[$"{mgrName}!{mgrAssm}"];
-            var entity = (IEntity)Activator.CreateInstance(entityType);
+            // Hat-tip Gąska for letting me know about this. Only works on essentially
+            // Plain Old CLR Objects with malevolent constructors; there's not enough
+            // information in the spec to reconstitute objects whose constructors do
+            // useful work. Which is why I prefer ACI and mocking.
+            var entity = (IEntity)FormatterServices.GetSafeUninitializedObject(entityType);
+            // Pretty sure Managers are safe to default-construct, and *aren't* safe
+            // to poof into existence, even if the ones in the test environment are.
             EntityExtensions.managers[entity] = () =>
                  (IEntityManager)Activator.CreateInstance(managerType);
 
@@ -222,7 +227,7 @@ namespace TECH_ASM_LS1
             return assembly.GetType(typeName, true);
         }
 
-        [WebPermission(SecurityAction.Assert, ConnectPattern = "http://44.inedo.com/FoxworksEntMgr/.+")]
+        [WebPermission(SecurityAction.Assert, ConnectPattern = "http://44\\.inedo\\.com/FoxworksEntMgr/.+")]
         private Assembly ResolveAssembly(string assemblyName)
         {
             var assemblyAsString = httpClient.GetStringAsync(

@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntMgr-Proxy", "EntMgr-Prox
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntMgr-Interfaces", "EntMgr-Interfaces\EntMgr-Interfaces.csproj", "{21261242-55FB-4BCF-BF8A-B0200A503B7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mallard", "Mallard\Mallard.csproj", "{2796A042-5BAA-4453-84E9-7ACD640B3C32}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,10 +33,6 @@ Global
 		{21261242-55FB-4BCF-BF8A-B0200A503B7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21261242-55FB-4BCF-BF8A-B0200A503B7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{21261242-55FB-4BCF-BF8A-B0200A503B7D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2796A042-5BAA-4453-84E9-7ACD640B3C32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2796A042-5BAA-4453-84E9-7ACD640B3C32}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2796A042-5BAA-4453-84E9-7ACD640B3C32}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2796A042-5BAA-4453-84E9-7ACD640B3C32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

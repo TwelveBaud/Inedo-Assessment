@@ -5,8 +5,6 @@ using System.Linq;
 using System.Security;
 using System.Security.Permissions;
 using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TECH_ASM_LS1.Runner
 {
@@ -43,7 +41,7 @@ namespace TECH_ASM_LS1.Runner
                         // Create a safe directory for the Entity Manager sandbox
                         var appBase = new DirectoryInfo($"{Environment.GetEnvironmentVariable("TEMP")}\\{Guid.NewGuid()}");
                         appBase.Create();
-                        foreach (var filename in new string[] { "TECH-ASM-LS1.dll", "EntMgr.dll", "EntMgr-Interfaces.dll", "System.Web.dll" })
+                        foreach (var filename in new string[] { "TECH-ASM-LS1.dll", "EntMgr.dll", "EntMgr-Interfaces.dll" })
                             File.Copy($"{AppDomain.CurrentDomain.BaseDirectory}\\{filename}", $"{appBase.FullName}\\{filename}");
 
                         // Create a sandbox to semi-safely execute Entity Manager code
@@ -52,16 +50,18 @@ namespace TECH_ASM_LS1.Runner
                             ApplicationBase = appBase.FullName,
                         };
                         var grantSet = new PermissionSet(PermissionState.None);
+                        // Guru code can only run, it can't do anything involving the filesystem,
+                        // network, or UI, among other things. By extension, it hits other limits,
+                        // such as reflection being limited to things it already knows about, 
+                        // because otherwise it could access PII in directory names. It can't, 
+                        // for example, check if an assembly named "System.Web" is loaded and 
+                        // reach inside for HttpContext.Current, since it doesn't have a direct
+                        // reference to System.Web. Just as a *completely not contrived* example.
                         grantSet.AddPermission(
                             new SecurityPermission(SecurityPermissionFlag.Execution));
-                        //HACK: Allow Products code to investigate whether or not its in a """secure"""
-                        // environment by lowering actual security. *sigh*
-                        // This shouldn't result in information disclosure, but it's theoretically
-                        // possible for the Guru to smuggle information out through fabricated
-                        // entity GUIDs if he knows that this is a thing.
-                        grantSet.AddPermission(
-                            new FileIOPermission(PermissionState.None)
-                            { AllLocalFiles = FileIOPermissionAccess.PathDiscovery });
+                        // However, because our framework code is strong-name signed, we can
+                        // grant it full trust in the sandbox so it can make its own security
+                        // assertions and do things Guru code isn't allowed to do.
                         var appDomain = AppDomain.CreateDomain("Sandbox",
                             null, appDomainSetup, grantSet,
                             typeof(Framework).Assembly.Evidence.GetHostEvidence<StrongName>());

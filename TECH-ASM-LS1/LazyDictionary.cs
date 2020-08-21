@@ -1,24 +1,44 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TECH_ASM_LS1
 {
-    class LazyDictionary<K, V> : IDictionary<K, V> where V : class
+    /// <summary>
+    /// Represents a dictionary where nonexistent elements are created on first access using the provided factory function.
+    /// </summary>
+    /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
+    /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
+    class LazyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        private Dictionary<K, V> cacheDictionary;
-        private Func<K, V> generatorFunc;
+        private Dictionary<TKey, TValue> cacheDictionary;
+        private Func<TKey, TValue> generatorFunc;
 
-        public LazyDictionary(Func<K, V> generatorFunc)
+        public LazyDictionary(Func<TKey, TValue> generatorFunc)
         {
-            this.cacheDictionary = new Dictionary<K, V>();
+            this.cacheDictionary = new Dictionary<TKey, TValue>();
             this.generatorFunc = generatorFunc;
         }
 
-        public V this[K key]
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            value = default;
+            if (!cacheDictionary.ContainsKey(key))
+            {
+                try
+                {
+                    value = generatorFunc(key);
+                    cacheDictionary[key] = value;
+                    return true;
+                }
+                catch (Exception)
+                { }
+                return false;
+            }
+            return ((IDictionary<TKey, TValue>)cacheDictionary).TryGetValue(key, out value);
+        }
+
+        public TValue this[TKey key]
         {
             get
             {
@@ -31,72 +51,67 @@ namespace TECH_ASM_LS1
                 return cacheDictionary[key];
             }
 
-            #region Implemented by cacheDictionary
-            set => ((IDictionary<K, V>)cacheDictionary)[key] = value;
+#region Implemented by cacheDictionary
+            set => ((IDictionary<TKey, TValue>)cacheDictionary)[key] = value;
         }
 
-        public ICollection<K> Keys => ((IDictionary<K, V>)cacheDictionary).Keys;
+        public ICollection<TKey> Keys => ((IDictionary<TKey, TValue>)cacheDictionary).Keys;
 
-        public ICollection<V> Values => ((IDictionary<K, V>)cacheDictionary).Values;
+        public ICollection<TValue> Values => ((IDictionary<TKey, TValue>)cacheDictionary).Values;
 
-        public int Count => ((ICollection<KeyValuePair<K, V>>)cacheDictionary).Count;
+        public int Count => ((ICollection<KeyValuePair<TKey, TValue>>)cacheDictionary).Count;
 
-        public bool IsReadOnly => ((ICollection<KeyValuePair<K, V>>)cacheDictionary).IsReadOnly;
+        public bool IsReadOnly => ((ICollection<KeyValuePair<TKey, TValue>>)cacheDictionary).IsReadOnly;
 
-        public void Add(K key, V value)
+        public void Add(TKey key, TValue value)
         {
-            ((IDictionary<K, V>)cacheDictionary).Add(key, value);
+            ((IDictionary<TKey, TValue>)cacheDictionary).Add(key, value);
         }
 
-        public void Add(KeyValuePair<K, V> item)
+        public void Add(KeyValuePair<TKey, TValue> item)
         {
-            ((ICollection<KeyValuePair<K, V>>)cacheDictionary).Add(item);
+            ((ICollection<KeyValuePair<TKey, TValue>>)cacheDictionary).Add(item);
         }
 
         public void Clear()
         {
-            ((ICollection<KeyValuePair<K, V>>)cacheDictionary).Clear();
+            ((ICollection<KeyValuePair<TKey, TValue>>)cacheDictionary).Clear();
         }
 
-        public bool Contains(KeyValuePair<K, V> item)
+        public bool Contains(KeyValuePair<TKey, TValue> item)
         {
-            return ((ICollection<KeyValuePair<K, V>>)cacheDictionary).Contains(item);
+            return ((ICollection<KeyValuePair<TKey, TValue>>)cacheDictionary).Contains(item);
         }
 
-        public bool ContainsKey(K key)
+        public bool ContainsKey(TKey key)
         {
-            return ((IDictionary<K, V>)cacheDictionary).ContainsKey(key);
+            return ((IDictionary<TKey, TValue>)cacheDictionary).ContainsKey(key);
         }
 
-        public void CopyTo(KeyValuePair<K, V>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            ((ICollection<KeyValuePair<K, V>>)cacheDictionary).CopyTo(array, arrayIndex);
+            ((ICollection<KeyValuePair<TKey, TValue>>)cacheDictionary).CopyTo(array, arrayIndex);
         }
 
-        public IEnumerator<KeyValuePair<K, V>> GetEnumerator()
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            return ((IEnumerable<KeyValuePair<K, V>>)cacheDictionary).GetEnumerator();
+            return ((IEnumerable<KeyValuePair<TKey, TValue>>)cacheDictionary).GetEnumerator();
         }
 
-        public bool Remove(K key)
+        public bool Remove(TKey key)
         {
-            return ((IDictionary<K, V>)cacheDictionary).Remove(key);
+            return ((IDictionary<TKey, TValue>)cacheDictionary).Remove(key);
         }
 
-        public bool Remove(KeyValuePair<K, V> item)
+        public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            return ((ICollection<KeyValuePair<K, V>>)cacheDictionary).Remove(item);
-        }
-
-        public bool TryGetValue(K key, out V value)
-        {
-            return ((IDictionary<K, V>)cacheDictionary).TryGetValue(key, out value);
+            return ((ICollection<KeyValuePair<TKey, TValue>>)cacheDictionary).Remove(item);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable)cacheDictionary).GetEnumerator();
         }
-        #endregion
+#endregion
     }
 }
